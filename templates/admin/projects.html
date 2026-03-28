@@ -1,0 +1,176 @@
+{% extends "base_admin.html" %}
+{% block title %}Projets{% endblock %}
+{% block page_title %}Projets{% endblock %}
+
+{% block content %}
+
+<!-- Add Project -->
+<div class="admin-card mb-3">
+  <div class="admin-card__header">
+    <h3><i class="fas fa-plus"></i> Nouveau projet</h3>
+  </div>
+  <div class="admin-card__body">
+    <form method="POST" action="{{ url_for('admin_project_add') }}" enctype="multipart/form-data">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Titre <span class="req">*</span></label>
+          <input type="text" name="title" required placeholder="Nom du projet">
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <select name="category">
+            {% for val, label in categories %}
+              <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="text" name="date" placeholder="Ex: Mars 2024">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" rows="3" placeholder="Description du projet…"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Photo de couverture</label>
+          <input type="file" name="cover_photo" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label>Ordre d'affichage</label>
+          <input type="number" name="order" value="0" min="0">
+        </div>
+        <div class="form-group form-group--check">
+          <label class="checkbox-label">
+            <input type="checkbox" name="visible" checked> Visible sur le site
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn--admin-primary"><i class="fas fa-plus"></i> Créer le projet</button>
+    </form>
+  </div>
+</div>
+
+<!-- Projects List -->
+<div class="admin-card">
+  <div class="admin-card__header"><h3>Projets ({{ projects|length }})</h3></div>
+  <div class="admin-card__body">
+    {% if projects %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Couverture</th>
+            <th>Titre</th>
+            <th>Catégorie</th>
+            <th>Date</th>
+            <th>Ordre</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projects %}
+          <tr>
+            <td>
+              {% if p.cover_photo %}
+                <img src="{{ url_for('static', filename='uploads/photos/' + p.cover_photo) }}" class="table-thumb" alt="{{ p.title }}">
+              {% else %}
+                <div class="table-thumb-placeholder"><i class="fas fa-image"></i></div>
+              {% endif %}
+            </td>
+            <td><strong>{{ p.title }}</strong>{% if p.description %}<br><small class="text-muted">{{ p.description[:60] }}…</small>{% endif %}</td>
+            <td><span class="tag">{{ p.category }}</span></td>
+            <td>{{ p.date or '—' }}</td>
+            <td>{{ p.order }}</td>
+            <td><span class="status-badge {% if p.visible %}status-badge--on{% else %}status-badge--off{% endif %}">{{ 'Visible' if p.visible else 'Masqué' }}</span></td>
+            <td class="actions-cell">
+              <button class="btn-icon btn-icon--primary" onclick="openEditProject({{ p.id }}, '{{ p.title|replace("'", "\\'") }}', '{{ p.description|replace("'","\\'") }}', '{{ p.category }}', '{{ p.date }}', {{ p.order }}, {{ p.visible|lower }})" title="Modifier"><i class="fas fa-pen"></i></button>
+              <a href="{{ url_for('admin_project_delete', pid=p.id) }}" class="btn-icon btn-icon--danger" title="Supprimer" onclick="return confirm('Supprimer ce projet et toutes ses photos ?')"><i class="fas fa-trash"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-note">Aucun projet pour le moment.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editProjectModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Modifier le projet</h3>
+      <button onclick="closeModal()" class="modal-close"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" id="editProjectForm" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Titre</label>
+            <input type="text" name="title" id="editTitle" required>
+          </div>
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select name="category" id="editCategory">
+              {% for val, label in categories %}
+                <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" id="editDesc" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="text" name="date" id="editDate">
+          </div>
+          <div class="form-group">
+            <label>Ordre</label>
+            <input type="number" name="order" id="editOrder" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nouvelle couverture (optionnel)</label>
+          <input type="file" name="cover_photo" accept="image/*">
+        </div>
+        <div class="form-group form-group--check">
+          <label class="checkbox-label">
+            <input type="checkbox" name="visible" id="editVisible"> Visible sur le site
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeModal()" class="btn btn--outline">Annuler</button>
+        <button type="submit" class="btn btn--admin-primary"><i class="fas fa-save"></i> Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditProject(id, title, desc, cat, date, order, visible){
+  document.getElementById('editTitle').value = title;
+  document.getElementById('editDesc').value = desc;
+  document.getElementById('editCategory').value = cat;
+  document.getElementById('editDate').value = date;
+  document.getElementById('editOrder').value = order;
+  document.getElementById('editVisible').checked = visible;
+  document.getElementById('editProjectForm').action = '/admin/projects/edit/' + id;
+  document.getElementById('editProjectModal').classList.add('open');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+</script>
+{% endblock %}
