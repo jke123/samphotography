@@ -7,8 +7,11 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change-this-secret-key-in-production")
+    
+    # Base de données SQLite par défaut (sera remplacée par PostgreSQL sur Render)
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "portfolio.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
     PROFILE_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "profile")
     PHOTOS_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "photos")
