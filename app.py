@@ -13,19 +13,19 @@ app.config.from_object(Config)
 # ─────────────────────────────────────────────
 #  ADAPTATION POUR RENDER (POSTGRESQL)
 # ─────────────────────────────────────────────
-# Remplacer SQLite par PostgreSQL si DATABASE_URL existe
+# Si on est sur Render, on utilise PostgreSQL
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
     # Render utilise postgres://, mais SQLAlchemy 1.4+ nécessite postgresql://
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(f"✅ Utilisation de PostgreSQL : {database_url[:30]}...")
+    print("✅ Base de données: PostgreSQL (Render)")
 else:
-    # Fallback sur SQLite pour le développement local
-    print("⚠️ Utilisation de SQLite (développement local)")
+    print("✅ Base de données: SQLite (développement local)")
+    # Garde la valeur par défaut de config.py
 
-db.init_app(app)
+db.init_app(app)  
 
 login_manager = LoginManager()
 login_manager.init_app(app)
