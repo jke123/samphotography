@@ -1,0 +1,77 @@
+{% extends "base_public.html" %}
+{% block title %}Galerie — {{ cfg.get('photographer_name','Portfolio') }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="page-hero__content">
+    <span class="section-label">Mes Photos</span>
+    <h1 class="page-hero__title">Galerie</h1>
+  </div>
+</section>
+
+<section class="section gallery-section">
+  <div class="container">
+
+    {% if categories %}
+    <div class="filter-tabs reveal">
+      <a href="{{ url_for('gallery') }}" class="filter-tab {% if current_cat == 'all' %}active{% endif %}">Tout</a>
+      {% for cat in categories %}
+        <a href="{{ url_for('gallery', cat=cat) }}" class="filter-tab {% if current_cat == cat %}active{% endif %}">
+          {{ cat|capitalize }}
+        </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if photos %}
+    <div class="masonry-gallery" id="gallery">
+      {% for photo in photos %}
+      <div class="masonry-item reveal">
+        <div class="gallery-img-wrap" onclick="openLightbox('{{ photo.filename }}','{{ photo.title }}','{{ photo.description }}')">
+          <img src="{{ photo.filename }}" alt="{{ photo.title or 'Photo' }}" loading="lazy" style="width:100%;display:block">
+          <div class="gallery-img-overlay">
+            <i class="fas fa-expand"></i>
+            {% if photo.title %}<span class="gallery-img-title">{{ photo.title }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state reveal">
+      <i class="fas fa-images empty-state__icon"></i>
+      <p>Aucune photo disponible pour le moment.<br>Revenez bientôt !</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <div class="lightbox-inner" onclick="event.stopPropagation()">
+    <img src="" alt="" id="lightbox-img">
+    <div class="lightbox-info">
+      <p id="lightbox-title"></p>
+      <p id="lightbox-desc" class="lightbox-desc"></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openLightbox(src, title, desc){
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-title').textContent = title;
+  document.getElementById('lightbox-desc').textContent = desc;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
+</script>
+{% endblock %}
